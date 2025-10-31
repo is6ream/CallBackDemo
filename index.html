@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Демо Call Back авторизации | Unibell</title>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #50ffea;
+            --secondary: #9333ea;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a2439 100%);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        .logo {
+            font-family: 'Unbounded', sans-serif;
+            font-weight: 700;
+            font-size: 32px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .auth-flow {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .flow-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--bg-dark);
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(80, 255, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-callback {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .callback-simulation {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed var(--primary);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .callback-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .phone-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            font-family: 'Unbounded', sans-serif;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .phone-number:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 15px rgba(80, 255, 234, 0.5);
+        }
+
+        .callback-status {
+            font-size: 18px;
+            color: var(--text-muted);
+            margin: 10px 0;
+        }
+
+        .callback-message {
+            background: rgba(80, 255, 234, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .callback-text {
+            font-size: 16px;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .callback-code {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--primary);
+            font-family: 'Unbounded', sans-serif;
+            letter-spacing: 8px;
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(80, 255, 234, 0.3);
+        }
+
+        .timer {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+            font-weight: 600;
+        }
+
+        .success {
+            background: rgba(80, 255, 234, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .error {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+
+        .info-panel {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .benefits-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .benefits-list li {
+            margin-bottom: 15px;
+            padding-left: 25px;
+            position: relative;
+            color: var(--text-light);
+        }
+
+        .benefits-list li:before {
+            content: "✓";
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Адаптация для планшетов */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 95%;
+            }
+            
+            .demo-container {
+                gap: 30px;
+            }
+            
+            .auth-flow, .info-panel {
+                padding: 30px;
+            }
+            
+            .header {
+                margin-bottom: 30px;
+                padding: 15px;
+            }
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .demo-container {
+                grid-template-columns: 1fr;
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+                margin-bottom: 25px;
+                padding: 10px;
+            }
+            
+            .logo {
+                font-size: 28px;
+            }
+            
+            .company-info {
+                text-align: center;
+            }
+            
+            .auth-flow, .info-panel {
+                padding: 25px 20px;
+                border-radius: 15px;
+            }
+            
+            .flow-title {
+                font-size: 22px;
+                margin-bottom: 25px;
+            }
+            
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            input {
+                padding: 12px 15px;
+                font-size: 16px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .callback-simulation {
+                padding: 25px 20px;
+                margin: 18px 0;
+            }
+            
+            .phone-number {
+                font-size: 24px;
+                margin: 12px 0;
+            }
+            
+            .callback-status {
+                font-size: 16px;
+                margin: 8px 0;
+            }
+            
+            .callback-code {
+                font-size: 28px;
+                letter-spacing: 6px;
+            }
+            
+            .timer {
+                font-size: 16px;
+                margin: 18px 0;
+            }
+            
+            .status-message {
+                padding: 12px;
+                margin: 18px 0;
+                font-size: 15px;
+            }
+            
+            footer {
+                padding: 25px 15px;
+                font-size: 14px;
+            }
+        }
+
+        /* Адаптация для маленьких мобильных устройств */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                margin-bottom: 20px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            .auth-flow, .info-panel {
+                padding: 20px 15px;
+                border-radius: 12px;
+            }
+            
+            .flow-title {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .form-group {
+                margin-bottom: 18px;
+            }
+            
+            label {
+                font-size: 15px;
+                margin-bottom: 8px;
+            }
+            
+            input {
+                padding: 12px;
+                font-size: 16px;
+            }
+            
+            .btn {
+                padding: 13px 18px;
+                font-size: 15px;
+            }
+            
+            .callback-simulation {
+                padding: 20px 15px;
+                margin: 16px 0;
+            }
+            
+            .phone-number {
+                font-size: 20px;
+                margin: 10px 0;
+            }
+            
+            .callback-status {
+                font-size: 15px;
+            }
+            
+            .callback-code {
+                font-size: 24px;
+                letter-spacing: 4px;
+            }
+            
+            .benefits-list li {
+                font-size: 14px;
+                margin-bottom: 12px;
+                padding-left: 22px;
+            }
+            
+            footer {
+                padding: 20px 10px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">UNIBELL</div>
+        </header>
+        
+        <div class="demo-container">
+            <div class="auth-flow">
+                <h2 class="flow-title">Тестирование Call Back авторизации</h2>
+                
+                <!-- Шаг 1: Ввод телефона -->
+                <div class="step active" id="step1">
+                    <div class="form-group">
+                        <label for="phone">
+                            <i class="fas fa-mobile-alt"></i> Ваш номер телефона
+                        </label>
+                        <input type="text" id="phone" placeholder="Например: 79123456789" required>
+                    </div>
+                    <button class="btn btn-callback" id="initiateCallbackBtn">
+                        <i class="fas fa-phone"></i> Получить номер для звонка
+                    </button>
+                </div>
+                
+                <!-- Шаг 2: Номер для звонка -->
+                <div class="step" id="step2">
+                    <div class="callback-simulation">
+                        <div class="callback-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div class="callback-status">
+                            Позвоните на этот номер для получения кода:
+                        </div>
+                        <div class="phone-number" id="callbackNumberDisplay">
+                            +7 (900) 123-45-67
+                        </div>
+                        
+                        <div class="instructions">
+                            <h3 style="color: var(--primary); margin-bottom: 15px;">Инструкция:</h3>
+                            <ol>
+                                <li>Скопируйте номер выше</li>
+                                <li>Позвоните на этот номер с вашего телефона</li>
+                                <li>Робот продиктует 4-значный код авторизации</li>
+                                <li>Введите полученный код в поле ниже</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="callback-status" id="callbackStatus">
+                            Ожидаем ваш звонок...
+                        </div>
+                    </div>
+                    
+                    <p class="timer" id="timer">
+                        Код действителен: <span id="countdown">10:00</span>
+                    </p>
+                    
+                    <button class="btn" id="enteredCodeBtn">
+                        <i class="fas fa-check-circle"></i> Я получил(а) код
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="backToPhoneBtn">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                </div>
+                
+                <!-- Шаг 3: Ввод кода -->
+                <div class="step" id="step3">
+                    <div class="callback-simulation">
+                        <div class="callback-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="callback-status">
+                            Робот продиктовал код:
+                        </div>
+                        
+                        <div class="callback-message">
+                            <div class="callback-text">
+                                При звонке вы услышали сообщение:
+                            </div>
+                            <div class="callback-text">
+                                "Здравствуйте! Ваш код авторизации:"
+                            </div>
+                            <div class="callback-code" id="callbackCodeDisplay">8 5 3 1</div>
+                            <div class="callback-text">
+                                "Повторяю: код авторизации - восемь, пять, три, один"
+                            </div>
+                            <div class="callback-text">
+                                "Введите этот код на сайте. Спасибо!"
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="callbackCode">
+                            <i class="fas fa-key"></i> Код из звонка
+                        </label>
+                        <input type="text" id="callbackCode" placeholder="Введите 4 цифры" maxlength="4" required>
+                    </div>
+                    
+                    <button class="btn" id="verifyCodeBtn">
+                        <i class="fas fa-check"></i> Подтвердить авторизацию
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="backToCallbackBtn">
+                        <i class="fas fa-arrow-left"></i> Позвонить снова
+                    </button>
+                </div>
+                
+                <!-- Шаг 4: Успех -->
+                <div class="step" id="step4">
+                    <div class="status-message success" id="successMessage">
+                        <i class="fas fa-check-circle"></i> Авторизация успешна! Call Back код подтвержден.
+                    </div>
+                    <button class="btn" id="restartBtn">
+                        <i class="fas fa-redo"></i> Начать заново
+                    </button>
+                </div>
+                
+                <!-- Сообщение об ошибке -->
+                <div class="status-message error" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i> Неверный код. Попробуйте еще раз.
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h2 style="color: var(--primary); margin-bottom: 30px; text-align: center;">Преимущества Call Back авторизации</h2>
+                
+                <ul class="benefits-list">
+                    <li>Пользователь сам совершает звонок - полный контроль</li>
+                    <li>Работает на любых телефонах, даже кнопочных</li>
+                    <li>Не требует доступа к интернету</li>
+                    <li>Защита от перехвата SMS сообщений</li>
+                    <li>Низкая стоимость по сравнению с SMS</li>
+                    <li>Высокий уровень доверия пользователей</li>
+                </ul>
+                
+                <div style="background: rgba(80, 255, 234, 0.1); padding: 20px; border-radius: 10px; margin-top: 20px; border: 1px solid var(--primary);">
+                    <h3 style="color: var(--primary); margin-bottom: 15px;">Как работает демо:</h3>
+                    <ol style="color: var(--text-light); padding-left: 20px;">
+                        <li style="margin-bottom: 8px;">Введите ваш номер телефона</li>
+                        <li style="margin-bottom: 8px;">Нажмите "Получить номер для звонка"</li>
+                        <li style="margin-bottom: 8px;">Позвоните на указанный номер</li>
+                        <li style="margin-bottom: 8px;">Робот продиктует 4-значный код</li>
+                        <li>Введите услышанный код и авторизуйтесь!</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Демонстрация сервиса Call Back авторизации Unibell &copy; 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const step4 = document.getElementById('step4');
+            const phoneInput = document.getElementById('phone');
+            const callbackCodeInput = document.getElementById('callbackCode');
+            const initiateCallbackBtn = document.getElementById('initiateCallbackBtn');
+            const enteredCodeBtn = document.getElementById('enteredCodeBtn');
+            const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+            const backToPhoneBtn = document.getElementById('backToPhoneBtn');
+            const backToCallbackBtn = document.getElementById('backToCallbackBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const callbackNumberDisplay = document.getElementById('callbackNumberDisplay');
+            const callbackCodeDisplay = document.getElementById('callbackCodeDisplay');
+            const countdownDisplay = document.getElementById('countdown');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const callbackStatus = document.getElementById('callbackStatus');
+            
+            let generatedCallbackCode = '';
+            let countdownInterval;
+            let timeLeft = 600; // 10 минут в секундах
+            
+            // Слова для преобразования цифр в слова
+            const numberWords = {
+                '0': 'ноль', '1': 'один', '2': 'два', '3': 'три', '4': 'четыре',
+                '5': 'пять', '6': 'шесть', '7': 'семь', '8': 'восемь', '9': 'девять'
+            };
+
+            // Генерация случайного номера для обратного звонка
+            function generateCallbackNumber() {
+                const prefixes = ['900', '901', '902', '903', '904', '905', '906', '908', '909'];
+                const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const number = Math.floor(1000000 + Math.random() * 9000000);
+                return `+7 (${prefix}) ${number.toString().substring(0, 3)}-${number.toString().substring(3, 5)}-${number.toString().substring(5, 7)}`;
+            }
+
+            initiateCallbackBtn.addEventListener('click', function() {
+                const phone = phoneInput.value.trim();
+                
+                if (!phone || phone.length < 5) {
+                    alert('Пожалуйста, введите номер телефона');
+                    return;
+                }
+                
+                // Генерируем номер для обратного звонка
+                const callbackNumber = generateCallbackNumber();
+                callbackNumberDisplay.textContent = callbackNumber;
+                
+                // Генерируем код
+                generatedCallbackCode = generateCallbackCode();
+                
+                step1.classList.remove('active');
+                step2.classList.add('active');
+                errorMessage.style.display = 'none';
+                
+                startCountdown();
+                
+                // Обновляем отображение кода с правильными словами
+                const codeDigits = generatedCallbackCode.split('');
+                const codeWords = codeDigits.map(digit => numberWords[digit]).join(', ');
+                callbackCodeDisplay.textContent = generatedCallbackCode.split('').join(' ');
+                
+                // Обновляем текст в сообщении
+                const callbackMessage = document.querySelector('.callback-message');
+                if (callbackMessage) {
+                    callbackMessage.innerHTML = `
+                        <div class="callback-text">
+                            При звонке вы услышали сообщение:
+                        </div>
+                        <div class="callback-text">
+                            "Здравствуйте! Ваш код авторизации:"
+                        </div>
+                        <div class="callback-code">${generatedCallbackCode.split('').join(' ')}</div>
+                        <div class="callback-text">
+                            "Повторяю: код авторизации - ${codeWords}"
+                        </div>
+                        <div class="callback-text">
+                            "Введите этот код на сайте. Спасибо!"
+                        </div>
+                    `;
+                }
+            });
+            
+            enteredCodeBtn.addEventListener('click', function() {
+                step2.classList.remove('active');
+                step3.classList.add('active');
+                callbackCodeInput.focus();
+            });
+            
+            verifyCodeBtn.addEventListener('click', function() {
+                const enteredCode = callbackCodeInput.value.trim();
+                
+                if (enteredCode === generatedCallbackCode) {
+                    step3.classList.remove('active');
+                    step4.classList.add('active');
+                    successMessage.style.display = 'block';
+                    clearInterval(countdownInterval);
+                } else {
+                    errorMessage.style.display = 'block';
+                    callbackCodeInput.value = '';
+                    callbackCodeInput.focus();
+                }
+            });
+            
+            backToPhoneBtn.addEventListener('click', function() {
+                step2.classList.remove('active');
+                step1.classList.add('active');
+                clearInterval(countdownInterval);
+                callbackStatus.textContent = 'Ожидаем ваш звонок...';
+            });
+            
+            backToCallbackBtn.addEventListener('click', function() {
+                step3.classList.remove('active');
+                step2.classList.add('active');
+                startCountdown();
+            });
+            
+            restartBtn.addEventListener('click', function() {
+                step4.classList.remove('active');
+                step1.classList.add('active');
+                phoneInput.value = '';
+                callbackCodeInput.value = '';
+                successMessage.style.display = 'none';
+                errorMessage.style.display = 'none';
+                timeLeft = 600;
+                countdownDisplay.textContent = '10:00';
+                callbackStatus.textContent = 'Ожидаем ваш звонок...';
+            });
+            
+            function startCountdown() {
+                clearInterval(countdownInterval);
+                timeLeft = 600;
+                
+                countdownInterval = setInterval(function() {
+                    timeLeft--;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        countdownDisplay.textContent = '00:00';
+                        errorMessage.textContent = 'Время действия кода истекло. Запросите новый номер.';
+                        errorMessage.style.display = 'block';
+                    } else {
+                        const minutes = Math.floor(timeLeft / 60);
+                        const seconds = timeLeft % 60;
+                        countdownDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }, 1000);
+            }
+            
+            function generateCallbackCode() {
+                return Math.floor(1000 + Math.random() * 9000).toString();
+            }
+            
+            callbackCodeInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').substring(0, 4);
+                
+                if (this.value.length === 4) {
+                    verifyCodeBtn.click();
+                }
+            });
+            
+            // Добавляем возможность копирования номера
+            callbackNumberDisplay.addEventListener('click', function() {
+                const textArea = document.createElement('textarea');
+                textArea.value = this.textContent.replace(/\s/g, '');
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                // Показываем временное сообщение
+                const originalText = this.textContent;
+                this.textContent = 'Скопировано!';
+                this.style.color = '#4facfe';
+                
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.style.color = 'var(--primary)';
+                }, 1500);
+            });
+            
+            phoneInput.focus();
+        });
+    </script>
+</body>
+</html>
